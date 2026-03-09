@@ -66,6 +66,12 @@ Default local ports:
 - API: `8080`
 - worker: `8080` unless started separately with a different `PORT`
 
+## GitHub Pages reality
+- GitHub Pages publishes only the static frontend.
+- Live job submission requires a separately deployed backend API.
+- The Pages workflow reads `VITE_API_BASE_URL` from the GitHub repository variable of the same name.
+- If that variable is not set, the live site will load in a safe read-only state and explain that backend configuration is missing.
+
 ## Local testing reality
 - Frontend can be tested now
 - API contract can be tested now

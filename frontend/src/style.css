@@ -181,9 +181,14 @@ select option {
   margin-top: 1rem;
 }
 
+.deploy-message,
 .status-message,
 .error-message {
   margin: 0.35rem 0 0;
+}
+
+.deploy-message {
+  color: #d2e7d5;
 }
 
 .error-message {

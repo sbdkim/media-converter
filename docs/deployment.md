@@ -3,10 +3,22 @@
 ## Current prototype
 - GitHub Pages can host the frontend from `frontend/dist`
 - The frontend, API contract, and worker process pipeline are implemented
+- The Pages workflow can inject `VITE_API_BASE_URL` from a GitHub repository variable during the frontend build
 - Cloud Tasks is **not wired**; the API currently uses a placeholder queue interface
 - Firestore is **not wired**; the API currently uses an in-memory job store
 - Cloud Storage upload and signed download generation are **not wired**; the worker currently uses placeholder storage/signing adapters
 - The prototype is suitable for UI testing, API testing, worker testing, and repo hardening, not for production conversion traffic
+
+## What works where
+- Local development:
+  - frontend, API, and worker can all be run and tested independently
+  - local frontend defaults to `http://localhost:8080` if `VITE_API_BASE_URL` is not set
+- GitHub Pages:
+  - frontend publishes successfully on its own
+  - live submissions only work if `VITE_API_BASE_URL` points to a deployed API
+  - if no API URL is configured, the frontend should explain that backend setup is missing instead of failing silently
+- Production:
+  - requires a public API origin, aligned CORS, and real queue/store/storage integrations
 
 ## Intended production architecture
 - GitHub Pages serves the static frontend from `frontend/dist`
@@ -74,6 +86,8 @@ Additional production wiring will likely need:
 - Build the frontend with `npm --workspace frontend run build`
 - Publish `frontend/dist`
 - Keep Vite `base: './'` so repo-subpath deployments work
+- Set the repository variable `VITE_API_BASE_URL` to the deployed public API origin before relying on live submissions
+- The frontend should still load without that variable, but only in a documented read-only / not-configured state
 
 ## CI and deploy expectation
 - CI should run frontend tests, API tests, worker tests, and frontend build

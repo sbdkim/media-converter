@@ -1,5 +1,5 @@
 import './style.css';
-import { createJob, fetchJob } from './lib/api.js';
+import { createJob, fetchJob, getApiBaseUrl, isApiConfigured } from './lib/api.js';
 import { getStatusLabel, normalizeJobResponse, shouldContinuePolling } from './lib/jobState.js';
 import { getPresetOptions, validateSourceUrl } from './lib/validation.js';
 
@@ -71,6 +71,7 @@ document.querySelector('#app').innerHTML = `
         </form>
 
         <div class="message-stack">
+          <p id="deployMessage" class="deploy-message" aria-live="polite"></p>
           <p id="statusMessage" class="status-message" aria-live="polite"></p>
           <p id="errorMessage" class="error-message" aria-live="assertive"></p>
         </div>
@@ -130,6 +131,7 @@ const sourceUrlInput = document.querySelector('#sourceUrl');
 const outputFormatSelect = document.querySelector('#outputFormat');
 const qualityPresetSelect = document.querySelector('#qualityPreset');
 const submitButton = document.querySelector('#submitButton');
+const deployMessage = document.querySelector('#deployMessage');
 const statusMessage = document.querySelector('#statusMessage');
 const errorMessage = document.querySelector('#errorMessage');
 const jobStatus = document.querySelector('#jobStatus');
@@ -158,6 +160,15 @@ function updatePresetOptions() {
     .join('');
   state.qualityPreset = options[0].value;
   qualityPresetSelect.value = state.qualityPreset;
+}
+
+function syncDeploymentState() {
+  if (isApiConfigured()) {
+    deployMessage.textContent = `Backend API: ${getApiBaseUrl()}`;
+    return;
+  }
+
+  deployMessage.textContent = 'This deployment does not have a backend API configured yet. The UI is live, but job submission is disabled until VITE_API_BASE_URL is set for the frontend build.';
 }
 
 function syncProgress(job) {
@@ -210,6 +221,12 @@ form.addEventListener('submit', async (event) => {
   window.clearTimeout(state.pollTimer);
   clearError();
 
+  if (!isApiConfigured()) {
+    setError('Backend API is not configured for this deployment yet.');
+    setMessage('Set VITE_API_BASE_URL for the frontend build before testing live submissions.');
+    return;
+  }
+
   const validation = validateSourceUrl(sourceUrlInput.value);
   if (!validation.valid) {
     setError(validation.error);
@@ -254,6 +271,7 @@ qualityPresetSelect.addEventListener('change', () => {
 });
 
 updatePresetOptions();
+syncDeploymentState();
 syncProgress({
   jobId: '',
   status: '',
@@ -261,4 +279,6 @@ syncProgress({
   qualityPreset: '',
   downloadUrl: '',
 });
-setMessage('Waiting for a direct media URL from an authorized domain.');
+setMessage(isApiConfigured()
+  ? 'Waiting for a direct media URL from an authorized domain.'
+  : 'Frontend is live. Configure the backend API to enable submissions.');
