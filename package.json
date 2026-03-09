@@ -1,0 +1,20 @@
+{
+  "name": "authorized-media-converter",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Authorized media converter split across a GitHub Pages frontend and Cloud Run services.",
+  "workspaces": [
+    "frontend",
+    "backend/api",
+    "backend/worker"
+  ],
+  "scripts": {
+    "dev": "npm run dev:docs",
+    "dev:frontend": "npm --workspace frontend run dev",
+    "dev:api": "npm --workspace backend/api run start",
+    "dev:worker": "npm --workspace backend/worker run start",
+    "dev:docs": "node -e \"console.log('Run these in separate terminals: npm run dev:frontend, npm run dev:api, npm run dev:worker')\"",
+    "build": "npm run build --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present"
+  }
+}
