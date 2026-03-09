@@ -72,6 +72,29 @@ Default local ports:
 - The Pages workflow reads `VITE_API_BASE_URL` from the GitHub repository variable of the same name.
 - If that variable is not set, the live site will load in a safe read-only state and explain that backend configuration is missing.
 
+## Phase 1 live deployment
+The first live deployment target is a **minimal Cloud Run API** from `backend/api`.
+
+This phase intentionally does **not** add:
+- Firestore persistence
+- Cloud Tasks dispatch
+- Cloud Storage upload/signing
+- worker-backed durable conversion processing
+
+What this phase gives you:
+- a real public backend URL for the GitHub Pages frontend
+- correct CORS to `https://sbdkim.github.io/media-converter/`
+- minimal validation/status API behavior with temporary in-memory job state
+
+Deployment prep:
+1. Install the Google Cloud CLI (`gcloud`) on the machine that will deploy.
+2. Authenticate with `gcloud auth login`.
+3. Set the target project with `gcloud config set project <your-project-id>`.
+4. Run `npm.cmd run deploy:api:docs` for the repo-local pointers.
+5. Use `scripts/deploy-api-cloud-run.ps1` to deploy the API service.
+6. Set the GitHub repository variable `VITE_API_BASE_URL` to the deployed Cloud Run URL.
+7. Re-run the `Deploy Pages` workflow.
+
 ## Local testing reality
 - Frontend can be tested now
 - API contract can be tested now
@@ -83,5 +106,6 @@ Copy the example files before running locally:
 - `frontend/.env.example`
 - `backend/api/.env.example`
 - `backend/worker/.env.example`
+- `backend/api/cloudrun-env.example.yaml`
 
 See [docs/deployment.md](./docs/deployment.md) for the current prototype status and the production integrations still required.

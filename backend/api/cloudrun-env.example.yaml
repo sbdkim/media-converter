@@ -1,0 +1,8 @@
+PORT: "8080"
+NODE_ENV: "production"
+FRONTEND_ORIGIN: "https://sbdkim.github.io/media-converter/"
+ALLOWED_SOURCE_DOMAINS: "media.example.com,cdn.example.com"
+MAX_SOURCE_SIZE_MB: "250"
+SIGNED_URL_TTL_MINUTES: "30"
+USE_IN_MEMORY_STORE: "true"
+

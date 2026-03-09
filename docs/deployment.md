@@ -16,9 +16,58 @@
 - GitHub Pages:
   - frontend publishes successfully on its own
   - live submissions only work if `VITE_API_BASE_URL` points to a deployed API
-  - if no API URL is configured, the frontend should explain that backend setup is missing instead of failing silently
+- if no API URL is configured, the frontend should explain that backend setup is missing instead of failing silently
 - Production:
   - requires a public API origin, aligned CORS, and real queue/store/storage integrations
+
+## Phase 1 live deployment
+Phase 1 deploys only `backend/api` to Cloud Run so the public Pages frontend has a real backend origin.
+
+What Phase 1 includes:
+- public Cloud Run service for the API
+- unauthenticated public HTTP access to the API
+- `USE_IN_MEMORY_STORE=true`
+- frontend CORS restricted to `https://sbdkim.github.io/media-converter/`
+- GitHub Pages frontend configured with `VITE_API_BASE_URL`
+
+What Phase 1 does not include:
+- Firestore
+- Cloud Tasks
+- Cloud Storage
+- worker-backed durable production processing
+
+### Required local prerequisites
+- Google Cloud CLI (`gcloud`) installed
+- authenticated gcloud session
+- billing-enabled GCP project with Cloud Run API enabled
+
+### Manual deployment steps
+1. Authenticate:
+   ```powershell
+   gcloud auth login
+   gcloud config set project <your-project-id>
+   ```
+2. Enable Cloud Run if needed:
+   ```powershell
+   gcloud services enable run.googleapis.com cloudbuild.googleapis.com artifactregistry.googleapis.com
+   ```
+3. Deploy the API:
+   ```powershell
+   .\scripts\deploy-api-cloud-run.ps1 -ProjectId <your-project-id> -AllowedSourceDomains "media.example.com,cdn.example.com"
+   ```
+4. Verify the health endpoint:
+   ```powershell
+   curl https://<your-cloud-run-url>/health
+   ```
+5. In GitHub, set repository variable `VITE_API_BASE_URL=https://<your-cloud-run-url>`
+6. Re-run the `Deploy Pages` workflow.
+
+### Phase 1 verification targets
+- `GET /health` returns `{ "ok": true }`
+- GitHub Pages frontend loads
+- frontend calls the Cloud Run API instead of localhost
+- browser requests from `https://sbdkim.github.io/media-converter/` pass CORS
+- job state is understood to be temporary and reset on service restart
 
 ## Intended production architecture
 - GitHub Pages serves the static frontend from `frontend/dist`

@@ -14,6 +14,7 @@
     "dev:api": "npm --workspace backend/api run start",
     "dev:worker": "npm --workspace backend/worker run start",
     "dev:docs": "node -e \"console.log('Run these in separate terminals: npm run dev:frontend, npm run dev:api, npm run dev:worker')\"",
+    "deploy:api:docs": "node -e \"console.log('See docs/deployment.md and scripts/deploy-api-cloud-run.ps1 for the minimal Cloud Run API deployment path.')\"",
     "build": "npm run build --workspaces --if-present",
     "test": "npm run test --workspaces --if-present"
   }
