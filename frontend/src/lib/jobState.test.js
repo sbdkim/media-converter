@@ -1,28 +1,26 @@
-import { describe, expect, it } from 'vitest';
+import test from 'node:test';
+import assert from 'node:assert/strict';
 import { getStatusLabel, normalizeJobResponse, shouldContinuePolling } from './jobState.js';
 
-describe('jobState', () => {
-  it('knows which states should continue polling', () => {
-    expect(shouldContinuePolling('queued')).toBe(true);
-    expect(shouldContinuePolling('completed')).toBe(false);
-    expect(shouldContinuePolling('failed')).toBe(false);
-  });
+test('jobState knows which states should continue polling', () => {
+  assert.equal(shouldContinuePolling('queued'), true);
+  assert.equal(shouldContinuePolling('completed'), false);
+  assert.equal(shouldContinuePolling('failed'), false);
+});
 
-  it('normalizes missing job fields', () => {
-    expect(normalizeJobResponse({ jobId: 'a', status: 'processing' })).toEqual({
-      jobId: 'a',
-      status: 'processing',
-      progress: 0,
-      outputFormat: undefined,
-      qualityPreset: undefined,
-      downloadUrl: '',
-      errorCode: '',
-      errorMessage: '',
-    });
-  });
-
-  it('returns friendly labels', () => {
-    expect(getStatusLabel('expired')).toBe('Download expired');
+test('jobState normalizes missing job fields', () => {
+  assert.deepEqual(normalizeJobResponse({ jobId: 'a', status: 'processing' }), {
+    jobId: 'a',
+    status: 'processing',
+    progress: 0,
+    outputFormat: undefined,
+    qualityPreset: undefined,
+    downloadUrl: '',
+    errorCode: '',
+    errorMessage: '',
   });
 });
 
+test('jobState returns friendly labels', () => {
+  assert.equal(getStatusLabel('expired'), 'Download expired');
+});

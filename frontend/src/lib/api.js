@@ -1,4 +1,4 @@
-const configuredApiBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim();
+const configuredApiBaseUrl = import.meta.env?.VITE_API_BASE_URL?.trim();
 const isLocalhost = typeof window !== 'undefined' && ['localhost', '127.0.0.1'].includes(window.location.hostname);
 const API_BASE_URL = configuredApiBaseUrl || (isLocalhost ? 'http://localhost:8080' : '');
 

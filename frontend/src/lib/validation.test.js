@@ -1,30 +1,26 @@
-import { describe, expect, it } from 'vitest';
+import test from 'node:test';
+import assert from 'node:assert/strict';
 import { getPresetOptions, validateSourceUrl } from './validation.js';
 
-describe('validateSourceUrl', () => {
-  it('accepts direct media URLs', () => {
-    expect(validateSourceUrl('https://media.example.com/demo.mp4')).toEqual({
-      valid: true,
-      normalizedUrl: 'https://media.example.com/demo.mp4',
-    });
-  });
-
-  it('rejects third-party watch page hosts', () => {
-    expect(validateSourceUrl('https://www.youtube.com/watch?v=abc').valid).toBe(false);
-  });
-
-  it('rejects non-media paths', () => {
-    expect(validateSourceUrl('https://media.example.com/watch').error).toContain('direct media file');
+test('validateSourceUrl accepts direct media URLs', () => {
+  assert.deepEqual(validateSourceUrl('https://media.example.com/demo.mp4'), {
+    valid: true,
+    normalizedUrl: 'https://media.example.com/demo.mp4',
   });
 });
 
-describe('getPresetOptions', () => {
-  it('returns audio presets for mp3', () => {
-    expect(getPresetOptions('mp3').map((option) => option.value)).toEqual(['mp3-128k', 'mp3-320k']);
-  });
-
-  it('returns video presets for mp4', () => {
-    expect(getPresetOptions('mp4').map((option) => option.value)).toEqual(['mp4-360p', 'mp4-720p']);
-  });
+test('validateSourceUrl rejects third-party watch page hosts', () => {
+  assert.equal(validateSourceUrl('https://www.youtube.com/watch?v=abc').valid, false);
 });
 
+test('validateSourceUrl rejects non-media paths', () => {
+  assert.match(validateSourceUrl('https://media.example.com/watch').error, /direct media file/i);
+});
+
+test('getPresetOptions returns audio presets for mp3', () => {
+  assert.deepEqual(getPresetOptions('mp3').map((option) => option.value), ['mp3-128k', 'mp3-320k']);
+});
+
+test('getPresetOptions returns video presets for mp4', () => {
+  assert.deepEqual(getPresetOptions('mp4').map((option) => option.value), ['mp4-360p', 'mp4-720p']);
+});
