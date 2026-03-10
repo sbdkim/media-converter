@@ -12,6 +12,13 @@
   --border: #343136;
   --border-strong: #4d484f;
   --text: #f2ede6;
+  --heading-text: #f7f2eb;
+  --field-text: #f2ede6;
+  --field-bg: #111112;
+  --field-placeholder: #7f776f;
+  --progress-track-bg: #29272b;
+  --row-divider: rgba(255, 255, 255, 0.06);
+  --button-text-on-light: #151516;
   --muted: #a49b92;
   --accent: #d29a64;
   --accent-deep: #8b5a2b;
@@ -31,6 +38,13 @@
   --border: #d6ccc0;
   --border-strong: #b4a797;
   --text: #1e1f23;
+  --heading-text: #1f1813;
+  --field-text: #1f1c19;
+  --field-bg: #fffdfa;
+  --field-placeholder: #877b70;
+  --progress-track-bg: #dfd5ca;
+  --row-divider: rgba(94, 74, 54, 0.14);
+  --button-text-on-light: #201914;
   --muted: #675f56;
   --accent: #9b5b2f;
   --accent-deep: #7f471f;
@@ -116,6 +130,7 @@ code {
 .status-heading h2 {
   margin: 0;
   line-height: 1.06;
+  color: var(--heading-text);
 }
 
 .brand-block h1 {
@@ -278,7 +293,7 @@ code {
   display: block;
   margin-bottom: 8px;
   font-weight: 700;
-  color: #eae4dd;
+  color: var(--heading-text);
 }
 
 .dropzone,
@@ -326,8 +341,8 @@ input,
 select {
   width: 100%;
   padding: 0 14px;
-  background: #111112;
-  color: var(--text);
+  background: var(--field-bg);
+  color: var(--field-text);
 }
 
 select {
@@ -344,7 +359,7 @@ select {
 }
 
 input::placeholder {
-  color: #7f776f;
+  color: var(--field-placeholder);
 }
 
 input:focus,
@@ -378,7 +393,7 @@ select:focus,
 .primary-button,
 .download-link {
   background: var(--text);
-  color: #151516;
+  color: var(--button-text-on-light);
   border-color: #f4e7d8;
   font-weight: 700;
 }
@@ -433,7 +448,7 @@ select:focus,
 
 .progress-track {
   height: 10px;
-  background: #29272b;
+  background: var(--progress-track-bg);
   overflow: hidden;
 }
 
@@ -452,7 +467,7 @@ select:focus,
 
 .job-facts div {
   padding: 12px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid var(--row-divider);
 }
 
 .job-facts dd {
