@@ -25,16 +25,22 @@ const STATUS_DETAILS = {
   idle: 'Drop or paste a direct media file URL to start a new conversion.',
 };
 
+const THEME_STORAGE_KEY = 'media-converter-theme';
+
 function renderApp() {
   return `
     <div class="app-shell">
       <header class="topbar">
         <div class="brand-block">
           <p class="product-kicker">Media Converter</p>
-          <h1>Direct source in. Fixed preset out.</h1>
+          <h1>Convert direct media URLs with fixed presets.</h1>
+          <p class="brand-copy">Built for quick internal conversions without custom encode setup.</p>
         </div>
         <div class="env-panel">
-          <span id="backendBadge" class="env-badge">Checking runtime</span>
+          <div class="env-actions">
+            <span id="backendBadge" class="env-badge">Checking runtime</span>
+            <button id="themeToggle" class="theme-toggle" type="button">Light mode</button>
+          </div>
           <p id="deployMessage" class="env-copy" aria-live="polite"></p>
         </div>
       </header>
@@ -213,6 +219,7 @@ export function initApp(root = document.querySelector('#app'), overrides = {}) {
   const pasteButton = root.querySelector('#pasteButton');
   const dropZone = root.querySelector('#dropZone');
   const backendBadge = root.querySelector('#backendBadge');
+  const themeToggle = root.querySelector('#themeToggle');
   const deployMessage = root.querySelector('#deployMessage');
   const urlHint = root.querySelector('#urlHint');
   const presetHint = root.querySelector('#presetHint');
@@ -230,6 +237,17 @@ export function initApp(root = document.querySelector('#app'), overrides = {}) {
   const progressFill = root.querySelector('#progressFill');
   const jobStatePill = root.querySelector('#jobStatePill');
   const stage = root.querySelector('.stage');
+
+  function getPreferredTheme() {
+    const storedTheme = window.localStorage?.getItem(THEME_STORAGE_KEY);
+    return storedTheme === 'light' ? 'light' : 'dark';
+  }
+
+  function applyTheme(theme) {
+    document.documentElement.dataset.theme = theme;
+    themeToggle.textContent = theme === 'dark' ? 'Light mode' : 'Dark mode';
+    window.localStorage?.setItem(THEME_STORAGE_KEY, theme);
+  }
 
   function setMessage(message) {
     statusMessage.textContent = message;
@@ -511,6 +529,10 @@ export function initApp(root = document.querySelector('#app'), overrides = {}) {
     }
   });
 
+  themeToggle.addEventListener('click', () => {
+    applyTheme(document.documentElement.dataset.theme === 'light' ? 'dark' : 'light');
+  });
+
   outputFormatSelect.addEventListener('change', () => {
     state.outputFormat = outputFormatSelect.value;
     updatePresetOptions();
@@ -532,6 +554,7 @@ export function initApp(root = document.querySelector('#app'), overrides = {}) {
   });
 
   updatePresetOptions();
+  applyTheme(getPreferredTheme());
   setUrlHint('Direct .mp4, .mov, .webm, .mp3, .wav, .m4a, .aac, or .ogg file URL.', 'neutral');
   syncDeploymentState();
   resetJobState();

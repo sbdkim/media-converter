@@ -82,6 +82,26 @@ test('shows inline URL validation feedback before submit', async () => {
   }
 });
 
+test('toggles between dark and light themes', async () => {
+  const dom = setupDom();
+  try {
+    const { initApp } = await loadAppModule();
+    initApp(document.querySelector('#app'));
+
+    const toggle = document.querySelector('#themeToggle');
+    assert.equal(document.documentElement.dataset.theme, 'dark');
+    assert.match(toggle.textContent, /Light mode/);
+
+    toggle.dispatchEvent(new Event('click', { bubbles: true }));
+
+    assert.equal(document.documentElement.dataset.theme, 'light');
+    assert.match(toggle.textContent, /Dark mode/);
+    assert.equal(window.localStorage.getItem('media-converter-theme'), 'light');
+  } finally {
+    teardownDom(dom);
+  }
+});
+
 test('accepts a dropped URL into the source field', async () => {
   const dom = setupDom();
   try {
