@@ -1,129 +1,170 @@
-import { createJob, fetchJob, getApiBaseUrl, isApiConfigured } from './lib/api.js';
+import {
+  createJob,
+  fetchJob,
+  getApiBaseUrl,
+  getApiMode,
+  isApiConfigured,
+} from './lib/api.js';
 import { getStatusLabel, normalizeJobResponse, shouldContinuePolling } from './lib/jobState.js';
 import { getPresetOptions, validateSourceUrl } from './lib/validation.js';
 
 const PRESET_DETAILS = {
-  'mp3-128k': 'Balanced audio preset for quick voice or reference exports.',
-  'mp3-320k': 'Higher bitrate audio preset for final listening copies.',
-  'mp4-360p': 'Smaller video preset for review and low-bandwidth sharing.',
-  'mp4-720p': 'Sharper video preset for standard playback and review.',
+  'mp3-128k': 'Balanced audio export for voice notes, previews, and lightweight delivery.',
+  'mp3-320k': 'Higher bitrate audio for final listening copies and archive handoff.',
+  'mp4-360p': 'Compact review preset for quick checks and low-bandwidth sharing.',
+  'mp4-720p': 'Standard video output for internal review and general playback.',
 };
 
 const STATUS_DETAILS = {
-  queued: 'Request accepted. The backend has not started processing yet.',
-  validating: 'Checking the source URL and preset before conversion begins.',
-  processing: 'Conversion is running. Keep this tab open if you want live updates.',
-  completed: 'Output is ready. Use the download action below.',
-  failed: 'The job stopped before completion. Review the error and submit again.',
-  expired: 'The download window closed. Submit a new conversion if you still need the file.',
-  idle: 'Submit a direct media URL to create a new conversion job.',
+  queued: 'Request accepted and waiting for backend execution.',
+  validating: 'Source and preset checks are running before conversion starts.',
+  processing: 'Conversion is in progress. Leave this tab open for live updates.',
+  completed: 'Output is ready. Download it or start another conversion.',
+  failed: 'The job stopped before completion. Review the error and retry.',
+  expired: 'The temporary download has expired. Submit again if you still need the file.',
+  idle: 'Drop or paste a direct media file URL to start a new conversion.',
 };
 
 function renderApp() {
   return `
     <div class="app-shell">
-      <header class="utility-bar">
-        <div>
-          <p class="product-name">Media Converter</p>
-          <p class="product-meta">Authorized direct media only</p>
+      <header class="topbar">
+        <div class="brand-block">
+          <p class="product-kicker">Media Converter</p>
+          <h1>Direct source in. Fixed preset out.</h1>
         </div>
-        <div class="utility-status">
-          <span id="backendBadge" class="backend-badge">Checking backend</span>
-          <p id="deployMessage" class="deploy-message" aria-live="polite"></p>
+        <div class="env-panel">
+          <span id="backendBadge" class="env-badge">Checking runtime</span>
+          <p id="deployMessage" class="env-copy" aria-live="polite"></p>
         </div>
       </header>
 
       <main class="workspace">
-        <section class="panel panel-main">
-          <div class="panel-heading">
-            <div>
-              <h1>Create conversion job</h1>
-              <p class="panel-copy">Paste a direct file URL, choose the output, and submit.</p>
+        <section class="stage">
+          <section class="composer">
+            <div class="section-head">
+              <div>
+                <p class="section-label">Submit</p>
+                <h2>Create conversion job</h2>
+              </div>
+              <button id="resetButton" class="secondary-button" type="button">Clear</button>
             </div>
-            <button id="resetButton" class="secondary-button" type="button">New job</button>
-          </div>
 
-          <form id="jobForm" class="job-form">
-            <label class="field" for="sourceUrl">
-              <span>Source URL</span>
-              <input id="sourceUrl" name="sourceUrl" type="url" placeholder="https://media.example.com/video.mp4" autocomplete="off" required />
-              <span id="urlHint" class="field-hint" aria-live="polite">Direct .mp4, .mov, .mp3, .wav, .m4a, .aac, .ogg, or .webm file URL.</span>
-            </label>
-
-            <div class="field-row">
-              <label class="field" for="outputFormat">
-                <span>Output</span>
-                <select id="outputFormat" name="outputFormat">
-                  <option value="mp3">MP3</option>
-                  <option value="mp4">MP4</option>
-                </select>
+            <form id="jobForm" class="job-form">
+              <label class="field field-source" for="sourceUrl">
+                <span>Source URL</span>
+                <div id="dropZone" class="dropzone">
+                  <input
+                    id="sourceUrl"
+                    name="sourceUrl"
+                    type="url"
+                    placeholder="https://media.example.com/video.mp4"
+                    autocomplete="off"
+                    required
+                  />
+                  <button id="pasteButton" class="ghost-button" type="button">Paste</button>
+                </div>
+                <span id="urlHint" class="field-hint" aria-live="polite">
+                  Direct .mp4, .mov, .webm, .mp3, .wav, .m4a, .aac, or .ogg file URL.
+                </span>
               </label>
 
-              <label class="field" for="qualityPreset">
-                <span>Preset</span>
-                <select id="qualityPreset" name="qualityPreset"></select>
-                <span id="presetHint" class="field-hint"></span>
-              </label>
+              <div class="control-strip">
+                <label class="field" for="outputFormat">
+                  <span>Output</span>
+                  <select id="outputFormat" name="outputFormat">
+                    <option value="mp3">MP3</option>
+                    <option value="mp4">MP4</option>
+                  </select>
+                </label>
+
+                <label class="field" for="qualityPreset">
+                  <span>Preset</span>
+                  <select id="qualityPreset" name="qualityPreset"></select>
+                </label>
+              </div>
+
+              <div class="preset-note">
+                <p class="section-label">Preset note</p>
+                <p id="presetHint" class="preset-copy"></p>
+              </div>
+
+              <div class="action-row">
+                <button id="submitButton" class="primary-button" type="submit">Start conversion</button>
+                <p id="statusMessage" class="status-message" aria-live="polite"></p>
+              </div>
+
+              <p id="errorMessage" class="error-message" aria-live="assertive"></p>
+            </form>
+          </section>
+
+          <section class="status-dock">
+            <div class="status-summary">
+              <div class="status-heading">
+                <div>
+                  <p class="section-label">Current job</p>
+                  <h2 id="jobStatus">Waiting for submission</h2>
+                </div>
+                <span id="jobStatePill" class="state-chip">Idle</span>
+              </div>
+              <p id="jobDetail" class="status-copy">${STATUS_DETAILS.idle}</p>
             </div>
 
-            <div class="form-actions">
-              <button id="submitButton" class="primary-button" type="submit">Start conversion</button>
-              <p id="statusMessage" class="status-message" aria-live="polite"></p>
+            <div class="progress-panel">
+              <div class="progress-meta">
+                <span>Progress</span>
+                <strong id="jobProgress">0%</strong>
+              </div>
+              <div class="progress-track" aria-hidden="true">
+                <div id="progressFill" class="progress-fill"></div>
+              </div>
             </div>
 
-            <p id="errorMessage" class="error-message" aria-live="assertive"></p>
-          </form>
+            <dl class="job-facts">
+              <div>
+                <dt>Preset</dt>
+                <dd id="jobPreset">-</dd>
+              </div>
+              <div>
+                <dt>Output</dt>
+                <dd id="jobFormat">-</dd>
+              </div>
+              <div>
+                <dt>Job ID</dt>
+                <dd id="jobId">-</dd>
+              </div>
+              <div>
+                <dt>Source host</dt>
+                <dd id="jobSourceHost">-</dd>
+              </div>
+            </dl>
+
+            <div class="next-step">
+              <p class="section-label">Next step</p>
+              <p id="nextStepCopy" class="status-copy">Submit a direct source URL to create a job.</p>
+            </div>
+
+            <a id="downloadLink" class="download-link is-hidden" href="" target="_blank" rel="noreferrer">Download output</a>
+          </section>
         </section>
 
-        <section class="panel panel-status">
-          <div class="panel-heading panel-heading-compact">
-            <div>
-              <h2>Job state</h2>
-              <p id="jobDetail" class="panel-copy">Submit a direct media URL to create a new conversion job.</p>
-            </div>
-            <span id="jobStatePill" class="state-chip">Idle</span>
+        <section class="support-strip">
+          <div class="support-card">
+            <p class="section-label">Allowed use</p>
+            <ul class="support-list">
+              <li>Use only media you host or are authorized to process.</li>
+              <li>Paste a direct file URL, not a watch page or playlist page.</li>
+              <li>Fixed presets only. No custom encode settings in this UI.</li>
+            </ul>
           </div>
-
-          <div class="progress-block">
-            <div class="progress-head">
-              <span>Progress</span>
-              <strong id="jobProgress">0%</strong>
-            </div>
-            <div class="progress-track" aria-hidden="true">
-              <div id="progressFill" class="progress-fill"></div>
-            </div>
+          <div class="support-card">
+            <p class="section-label">Workflow</p>
+            <ul class="support-list">
+              <li>Paste or drop a URL into the source field.</li>
+              <li>Pick output and preset, then submit.</li>
+              <li>Wait for completion, then download or clear for the next file.</li>
+            </ul>
           </div>
-
-          <dl class="status-grid">
-            <div>
-              <dt>State</dt>
-              <dd id="jobStatus">Waiting for submission</dd>
-            </div>
-            <div>
-              <dt>Preset</dt>
-              <dd id="jobPreset">-</dd>
-            </div>
-            <div>
-              <dt>Job ID</dt>
-              <dd id="jobId">-</dd>
-            </div>
-            <div>
-              <dt>Output</dt>
-              <dd id="jobFormat">-</dd>
-            </div>
-          </dl>
-
-          <a id="downloadLink" class="download-link is-hidden" href="" target="_blank" rel="noreferrer">Download output</a>
-        </section>
-
-        <section class="panel panel-support">
-          <h2>Requirements</h2>
-          <ul class="support-list">
-            <li>Use only media you host or have permission to process.</li>
-            <li>Paste a direct file URL, not a watch page or playlist URL.</li>
-            <li>Supported sources include common audio and video file extensions.</li>
-            <li>GitHub Pages stays read-only until <code>VITE_API_BASE_URL</code> is configured.</li>
-          </ul>
         </section>
       </main>
     </div>
@@ -142,6 +183,7 @@ export function initApp(root = document.querySelector('#app'), overrides = {}) {
     qualityPreset: 'mp3-128k',
     isSubmitting: false,
     pollTimer: null,
+    lastSubmittedUrl: '',
     lastJob: {
       jobId: '',
       status: '',
@@ -157,6 +199,7 @@ export function initApp(root = document.querySelector('#app'), overrides = {}) {
     createJob,
     fetchJob,
     getApiBaseUrl,
+    getApiMode,
     isApiConfigured,
     ...overrides,
   };
@@ -167,6 +210,8 @@ export function initApp(root = document.querySelector('#app'), overrides = {}) {
   const qualityPresetSelect = root.querySelector('#qualityPreset');
   const submitButton = root.querySelector('#submitButton');
   const resetButton = root.querySelector('#resetButton');
+  const pasteButton = root.querySelector('#pasteButton');
+  const dropZone = root.querySelector('#dropZone');
   const backendBadge = root.querySelector('#backendBadge');
   const deployMessage = root.querySelector('#deployMessage');
   const urlHint = root.querySelector('#urlHint');
@@ -179,9 +224,12 @@ export function initApp(root = document.querySelector('#app'), overrides = {}) {
   const jobId = root.querySelector('#jobId');
   const jobFormat = root.querySelector('#jobFormat');
   const jobDetail = root.querySelector('#jobDetail');
+  const jobSourceHost = root.querySelector('#jobSourceHost');
+  const nextStepCopy = root.querySelector('#nextStepCopy');
   const downloadLink = root.querySelector('#downloadLink');
   const progressFill = root.querySelector('#progressFill');
   const jobStatePill = root.querySelector('#jobStatePill');
+  const stage = root.querySelector('.stage');
 
   function setMessage(message) {
     statusMessage.textContent = message;
@@ -199,10 +247,23 @@ export function initApp(root = document.querySelector('#app'), overrides = {}) {
     return PRESET_DETAILS[presetValue] || 'Fixed preset selected for backend-safe conversion.';
   }
 
+  function getSourceHostLabel(sourceUrl) {
+    if (!sourceUrl) {
+      return '-';
+    }
+
+    try {
+      return new URL(sourceUrl).hostname;
+    } catch {
+      return '-';
+    }
+  }
+
   function setUrlHint(message, type = 'neutral') {
     urlHint.textContent = message;
     urlHint.dataset.state = type;
     sourceUrlInput.dataset.state = type;
+    dropZone.dataset.state = type;
     sourceUrlInput.setAttribute('aria-invalid', type === 'error' ? 'true' : 'false');
   }
 
@@ -210,7 +271,7 @@ export function initApp(root = document.querySelector('#app'), overrides = {}) {
     const value = sourceUrlInput.value.trim();
 
     if (!value) {
-      setUrlHint('Direct .mp4, .mov, .mp3, .wav, .m4a, .aac, .ogg, or .webm file URL.', 'neutral');
+      setUrlHint('Direct .mp4, .mov, .webm, .mp3, .wav, .m4a, .aac, or .ogg file URL.', 'neutral');
       return { valid: false, empty: true };
     }
 
@@ -220,7 +281,7 @@ export function initApp(root = document.querySelector('#app'), overrides = {}) {
       return validation;
     }
 
-    setUrlHint('Source looks valid. Submission will use the normalized URL.', 'success');
+    setUrlHint('Source looks valid. Submit to queue the conversion.', 'success');
     return validation;
   }
 
@@ -241,15 +302,23 @@ export function initApp(root = document.querySelector('#app'), overrides = {}) {
   }
 
   function syncDeploymentState() {
-    if (deps.isApiConfigured()) {
-      backendBadge.textContent = 'Backend connected';
+    const mode = deps.getApiMode ? deps.getApiMode() : (deps.isApiConfigured() ? 'configured' : 'unconfigured');
+    const apiBaseUrl = deps.getApiBaseUrl ? deps.getApiBaseUrl() : '';
+
+    if (mode === 'configured') {
+      backendBadge.textContent = 'Configured backend';
       backendBadge.dataset.state = 'ready';
-      deployMessage.textContent = `API ${deps.getApiBaseUrl()}`;
+      deployMessage.textContent = `Live API target: ${apiBaseUrl}`;
+    } else if (mode === 'local-fallback') {
+      backendBadge.textContent = 'Local fallback';
+      backendBadge.dataset.state = 'local';
+      deployMessage.textContent = `Using localhost fallback ${apiBaseUrl}. Useful for local testing only.`;
     } else {
-      backendBadge.textContent = 'Read-only mode';
+      backendBadge.textContent = 'Read-only';
       backendBadge.dataset.state = 'offline';
-      deployMessage.textContent = 'Set VITE_API_BASE_URL for the frontend build to enable submissions.';
+      deployMessage.textContent = 'No API origin is configured for this build. Set VITE_API_BASE_URL to enable submissions.';
     }
+
     updateSubmitState();
   }
 
@@ -264,10 +333,22 @@ export function initApp(root = document.querySelector('#app'), overrides = {}) {
     jobPreset.textContent = state.lastJob.qualityPreset || '-';
     jobId.textContent = state.lastJob.jobId || '-';
     jobFormat.textContent = state.lastJob.outputFormat ? state.lastJob.outputFormat.toUpperCase() : '-';
+    jobSourceHost.textContent = getSourceHostLabel(state.lastSubmittedUrl);
     jobDetail.textContent = STATUS_DETAILS[currentStatus] || STATUS_DETAILS.idle;
     jobStatePill.textContent = chipLabel;
     jobStatePill.dataset.state = currentStatus;
+    stage.dataset.status = currentStatus;
     progressFill.style.width = `${state.lastJob.progress}%`;
+
+    if (currentStatus === 'completed') {
+      nextStepCopy.textContent = 'Download the file now, or clear the form to process another source.';
+    } else if (currentStatus === 'failed' || currentStatus === 'expired') {
+      nextStepCopy.textContent = 'Review the source URL and submit a fresh job when ready.';
+    } else if (currentStatus === 'processing' || currentStatus === 'queued' || currentStatus === 'validating') {
+      nextStepCopy.textContent = 'Wait for the backend to finish processing. The status block will keep updating.';
+    } else {
+      nextStepCopy.textContent = 'Submit a direct source URL to create a job.';
+    }
 
     if (state.lastJob.downloadUrl) {
       downloadLink.href = state.lastJob.downloadUrl;
@@ -286,6 +367,7 @@ export function initApp(root = document.querySelector('#app'), overrides = {}) {
   function resetJobState() {
     window.clearTimeout(state.pollTimer);
     state.pollTimer = null;
+    state.lastSubmittedUrl = '';
     state.lastJob = {
       jobId: '',
       status: '',
@@ -299,7 +381,7 @@ export function initApp(root = document.querySelector('#app'), overrides = {}) {
     clearError();
     setMessage(deps.isApiConfigured()
       ? 'Ready for a direct media URL from an authorized domain.'
-      : 'The frontend is available, but submissions stay disabled until the backend is configured.');
+      : 'This build is read-only until an API origin is configured.');
   }
 
   async function pollJob(jobIdentifier) {
@@ -322,8 +404,13 @@ export function initApp(root = document.querySelector('#app'), overrides = {}) {
       }
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Unable to refresh job status.');
-      setMessage('Last known job state is still shown below.');
+      setMessage('Polling stopped. The last known job state is still shown.');
     }
+  }
+
+  function applySourceUrl(value) {
+    sourceUrlInput.value = value.trim();
+    validateUrlField();
   }
 
   form.addEventListener('submit', async (event) => {
@@ -344,6 +431,7 @@ export function initApp(root = document.querySelector('#app'), overrides = {}) {
       return;
     }
 
+    state.lastSubmittedUrl = validation.normalizedUrl;
     setSubmitting(true);
     setMessage('Submitting job...');
 
@@ -378,12 +466,49 @@ export function initApp(root = document.querySelector('#app'), overrides = {}) {
     if (!errorMessage.textContent) {
       setMessage(deps.isApiConfigured()
         ? 'Ready for a direct media URL from an authorized domain.'
-        : 'The frontend is available, but submissions stay disabled until the backend is configured.');
+        : 'This build is read-only until an API origin is configured.');
     }
   });
 
   sourceUrlInput.addEventListener('blur', () => {
     validateUrlField();
+  });
+
+  dropZone.addEventListener('dragenter', (event) => {
+    event.preventDefault();
+    dropZone.dataset.state = 'drag';
+  });
+
+  dropZone.addEventListener('dragover', (event) => {
+    event.preventDefault();
+    dropZone.dataset.state = 'drag';
+  });
+
+  dropZone.addEventListener('dragleave', () => {
+    dropZone.dataset.state = sourceUrlInput.dataset.state || 'neutral';
+  });
+
+  dropZone.addEventListener('drop', (event) => {
+    event.preventDefault();
+    const droppedUrl = event.dataTransfer?.getData('text/uri-list') || event.dataTransfer?.getData('text/plain') || '';
+    if (droppedUrl) {
+      applySourceUrl(droppedUrl);
+    }
+    dropZone.dataset.state = sourceUrlInput.dataset.state || 'neutral';
+  });
+
+  pasteButton.addEventListener('click', async () => {
+    if (!navigator.clipboard?.readText) {
+      setMessage('Clipboard paste is not available in this browser context.');
+      return;
+    }
+
+    try {
+      applySourceUrl(await navigator.clipboard.readText());
+      setMessage('Pasted clipboard text into the source field.');
+    } catch {
+      setMessage('Clipboard access was blocked. Paste the URL manually instead.');
+    }
   });
 
   outputFormatSelect.addEventListener('change', () => {
@@ -401,13 +526,13 @@ export function initApp(root = document.querySelector('#app'), overrides = {}) {
     state.outputFormat = 'mp3';
     outputFormatSelect.value = 'mp3';
     updatePresetOptions();
-    setUrlHint('Direct .mp4, .mov, .mp3, .wav, .m4a, .aac, .ogg, or .webm file URL.', 'neutral');
+    setUrlHint('Direct .mp4, .mov, .webm, .mp3, .wav, .m4a, .aac, or .ogg file URL.', 'neutral');
     resetJobState();
     sourceUrlInput.focus();
   });
 
   updatePresetOptions();
-  setUrlHint('Direct .mp4, .mov, .mp3, .wav, .m4a, .aac, .ogg, or .webm file URL.', 'neutral');
+  setUrlHint('Direct .mp4, .mov, .webm, .mp3, .wav, .m4a, .aac, or .ogg file URL.', 'neutral');
   syncDeploymentState();
   resetJobState();
 
