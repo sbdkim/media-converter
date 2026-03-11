@@ -23,10 +23,11 @@ test('optional ffmpeg integration: converts generated audio to mp3', { skip: !(a
       jobId: 'job_integration',
       sourceUrl: 'synthetic://audio',
       qualityPreset: 'mp3-128k',
-    },
+      },
     {
       downloader: {
-        async download(_, destinationPath) {
+        async download(jobInput, destinationPath) {
+          assert.equal(jobInput.jobId, 'job_integration');
           await execFileAsync('ffmpeg', [
             '-y',
             '-f',
@@ -57,4 +58,3 @@ test('optional ffmpeg integration: converts generated audio to mp3', { skip: !(a
   assert.equal(downloads.length, 1);
   assert.equal(result.status, 'completed');
 });
-

@@ -1,13 +1,8 @@
-const BLOCKED_HOST_PATTERNS = [
-  /(^|\.)youtube\.com$/i,
-  /(^|\.)youtu\.be$/i,
+const UNSUPPORTED_HOST_PATTERNS = [
   /(^|\.)facebook\.com$/i,
-  /(^|\.)instagram\.com$/i,
   /(^|\.)vimeo\.com$/i,
   /(^|\.)dailymotion\.com$/i,
 ];
-
-const BLOCKED_PATH_PATTERNS = [/\/watch/i, /\/shorts/i, /\/playlist/i];
 const MEDIA_EXTENSIONS = /\.(mp4|mov|m4v|webm|mp3|wav|m4a|aac|ogg)$/i;
 
 export function validateSourceUrl(value) {
@@ -28,19 +23,20 @@ export function validateSourceUrl(value) {
     return { valid: false, error: 'Only http and https URLs are supported.' };
   }
 
-  if (BLOCKED_HOST_PATTERNS.some((pattern) => pattern.test(parsedUrl.hostname))) {
+  if (UNSUPPORTED_HOST_PATTERNS.some((pattern) => pattern.test(parsedUrl.hostname))) {
     return {
       valid: false,
-      error: 'This prototype does not support YouTube or similar third-party platform URLs.',
+      error: 'This source platform is not supported yet. Try YouTube, Instagram, or a direct media URL.',
     };
   }
 
-  if (BLOCKED_PATH_PATTERNS.some((pattern) => pattern.test(parsedUrl.pathname))) {
-    return { valid: false, error: 'Paste a direct media file URL rather than a watch or playlist page.' };
-  }
+  const isKnownExtractorSource =
+    /(^|\.)youtube\.com$/i.test(parsedUrl.hostname) ||
+    /(^|\.)youtu\.be$/i.test(parsedUrl.hostname) ||
+    /(^|\.)instagram\.com$/i.test(parsedUrl.hostname);
 
-  if (!MEDIA_EXTENSIONS.test(parsedUrl.pathname)) {
-    return { valid: false, error: 'The URL must point to a direct media file such as .mp4 or .mp3.' };
+  if (!isKnownExtractorSource && !MEDIA_EXTENSIONS.test(parsedUrl.pathname)) {
+    return { valid: false, error: 'Paste a direct media file URL or a supported YouTube/Instagram page URL.' };
   }
 
   return { valid: true, normalizedUrl: parsedUrl.toString() };
@@ -59,4 +55,3 @@ export function getPresetOptions(outputFormat) {
     { value: 'mp4-720p', label: 'MP4 720p' },
   ];
 }
-

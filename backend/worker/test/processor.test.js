@@ -9,10 +9,11 @@ test('processJob returns completed result when dependencies succeed', async () =
       jobId: 'job_123',
       sourceUrl: 'https://media.example.com/demo.mp4',
       qualityPreset: 'mp3-128k',
-    },
+      },
     {
       downloader: {
-        async download() {
+        async download(jobInput) {
+          assert.equal(jobInput.jobId, 'job_123');
           return;
         },
       },
@@ -68,4 +69,3 @@ test('processJob returns failed result when ffmpeg errors', async () => {
   assert.equal(result.status, 'failed');
   assert.equal(result.errorCode, 'PROCESSING_FAILED');
 });
-

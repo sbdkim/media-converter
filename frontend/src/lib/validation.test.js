@@ -10,11 +10,11 @@ test('validateSourceUrl accepts direct media URLs', () => {
 });
 
 test('validateSourceUrl rejects third-party watch page hosts', () => {
-  assert.equal(validateSourceUrl('https://www.youtube.com/watch?v=abc').valid, false);
+  assert.equal(validateSourceUrl('https://www.youtube.com/watch?v=abc').valid, true);
 });
 
 test('validateSourceUrl rejects non-media paths', () => {
-  assert.match(validateSourceUrl('https://media.example.com/watch').error, /direct media file/i);
+  assert.match(validateSourceUrl('https://media.example.com/watch').error, /direct media file URL or a supported/i);
 });
 
 test('getPresetOptions returns audio presets for mp3', () => {

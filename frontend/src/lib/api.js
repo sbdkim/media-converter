@@ -57,6 +57,13 @@ export function createJob(input) {
   });
 }
 
+export function resolveSource(sourceUrl) {
+  return request('/api/resolve', {
+    method: 'POST',
+    body: JSON.stringify({ sourceUrl }),
+  });
+}
+
 export function fetchJob(jobId) {
   return request(`/api/jobs/${jobId}`, {
     method: 'GET',

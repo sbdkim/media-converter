@@ -28,6 +28,11 @@ export function normalizeJobResponse(job) {
     jobId: job.jobId,
     status: job.status,
     progress: Number.isFinite(job.progress) ? job.progress : 0,
+    platform: job.platform || '',
+    sourceType: job.sourceType || '',
+    title: job.title || '',
+    thumbnailUrl: job.thumbnailUrl || '',
+    selectedOutput: job.selectedOutput || null,
     outputFormat: job.outputFormat,
     qualityPreset: job.qualityPreset,
     downloadUrl: job.downloadUrl || '',
@@ -35,4 +40,3 @@ export function normalizeJobResponse(job) {
     errorMessage: job.errorMessage || '',
   };
 }
-

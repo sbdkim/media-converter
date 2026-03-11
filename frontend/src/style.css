@@ -289,6 +289,14 @@ code {
   gap: 18px;
 }
 
+.resolve-row,
+.resolved-meta,
+.resolved-facts div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+
 .field > span {
   display: block;
   margin-bottom: 8px;
@@ -300,7 +308,8 @@ code {
 .control-strip,
 .progress-panel,
 .next-step,
-.support-card {
+.support-card,
+.resolved-panel {
   border: 1px solid var(--border);
   background: var(--surface-alt);
 }
@@ -381,9 +390,50 @@ select:focus,
 }
 
 .preset-note,
-.status-summary {
+.status-summary,
+.resolved-panel {
   display: grid;
   gap: 10px;
+}
+
+.resolved-panel {
+  padding: 16px;
+}
+
+.resolved-meta {
+  align-items: start;
+}
+
+.resolved-meta h3 {
+  margin: 4px 0 0;
+  color: var(--heading-text);
+  font-size: 1.15rem;
+}
+
+.thumbnail {
+  width: 128px;
+  height: 72px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface-soft);
+}
+
+.resolved-facts {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+
+.resolved-facts div {
+  padding-top: 8px;
+  border-top: 1px solid var(--row-divider);
+}
+
+.resolved-facts dd {
+  margin: 0;
+  text-align: right;
+  font-weight: 700;
 }
 
 .preset-copy {
@@ -523,6 +573,9 @@ select:focus,
   .topbar,
   .section-head,
   .status-heading,
+  .resolve-row,
+  .resolved-meta,
+  .resolved-facts div,
   .control-strip,
   .action-row,
   .job-facts div,

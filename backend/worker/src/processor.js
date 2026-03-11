@@ -26,7 +26,7 @@ export async function processJob(job, dependencies) {
     const inputPath = path.join(tempDirectory, `input-${randomUUID()}`);
     const outputPath = path.join(tempDirectory, `output.${preset.outputExtension}`);
 
-    await downloader.download(job.sourceUrl, inputPath);
+    await downloader.download(job, inputPath);
     await runCommand('ffmpeg', buildFfmpegArgs({
       inputPath,
       outputPath,
@@ -59,4 +59,3 @@ export async function processJob(job, dependencies) {
     await rm(tempDirectory, { recursive: true, force: true });
   }
 }
-

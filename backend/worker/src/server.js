@@ -24,8 +24,8 @@ app.post('/tasks/process', async (request, reply) => {
 
   const result = await processJob(job, {
     downloader: {
-      async download(sourceUrl, destinationPath) {
-        const response = await fetch(sourceUrl);
+      async download(jobInput, destinationPath) {
+        const response = await fetch(jobInput.sourceUrl);
         if (!response.ok) {
           throw new Error('Failed to download source media.');
         }
@@ -56,4 +56,3 @@ app.listen({ port, host: '0.0.0.0' }).catch((error) => {
   console.error(error);
   process.exit(1);
 });
-

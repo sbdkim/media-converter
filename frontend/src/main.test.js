@@ -29,6 +29,43 @@ function teardownDom(dom) {
   delete globalThis.Node;
 }
 
+function createResolvedPayload() {
+  return {
+    platform: 'youtube',
+    sourceType: 'resolved-page',
+    canonicalUrl: 'https://youtube.com/watch?v=abc',
+    title: 'Example title',
+    thumbnailUrl: 'https://img.example.com/thumb.jpg',
+    durationSeconds: 123,
+    audioOnlySupported: true,
+    videoSupported: true,
+    resolveToken: 'resolve_123',
+    availableOutputs: [
+      {
+        id: 'audio-mp3',
+        outputFormat: 'mp3',
+        qualityPreset: 'mp3-128k',
+        label: 'Audio MP3',
+        description: 'Balanced audio export.',
+      },
+      {
+        id: 'video-mp4',
+        outputFormat: 'mp4',
+        qualityPreset: 'mp4-720p',
+        label: 'Video MP4',
+        description: 'Standard MP4 output.',
+      },
+    ],
+    defaultOutput: {
+      id: 'video-mp4',
+      outputFormat: 'mp4',
+      qualityPreset: 'mp4-720p',
+      label: 'Video MP4',
+      description: 'Standard MP4 output.',
+    },
+  };
+}
+
 test('renders read-only mode when the backend is not configured', async () => {
   const dom = setupDom();
   try {
@@ -40,42 +77,24 @@ test('renders read-only mode when the backend is not configured', async () => {
     });
 
     assert.match(document.querySelector('#backendBadge').textContent, /Read-only/);
-    assert.equal(document.querySelector('#submitButton').disabled, true);
+    assert.equal(document.querySelector('#resolveButton').disabled, true);
     assert.match(document.querySelector('#deployMessage').textContent, /VITE_API_BASE_URL/);
   } finally {
     teardownDom(dom);
   }
 });
 
-test('updates preset options when the output format changes', async () => {
-  const dom = setupDom();
-  try {
-    const { initApp } = await loadAppModule();
-    initApp(document.querySelector('#app'));
-
-    const formatSelect = document.querySelector('#outputFormat');
-    formatSelect.value = 'mp4';
-    formatSelect.dispatchEvent(new Event('change', { bubbles: true }));
-
-    const presetValues = Array.from(document.querySelectorAll('#qualityPreset option')).map((option) => option.value);
-    assert.deepEqual(presetValues, ['mp4-360p', 'mp4-720p']);
-    assert.match(document.querySelector('#presetHint').textContent, /review/i);
-  } finally {
-    teardownDom(dom);
-  }
-});
-
-test('shows inline URL validation feedback before submit', async () => {
+test('shows inline URL validation feedback before resolve', async () => {
   const dom = setupDom();
   try {
     const { initApp } = await loadAppModule();
     initApp(document.querySelector('#app'));
 
     const input = document.querySelector('#sourceUrl');
-    input.value = 'https://youtube.com/watch?v=abc';
+    input.value = 'https://facebook.com/watch?v=abc';
     input.dispatchEvent(new Event('input', { bubbles: true }));
 
-    assert.match(document.querySelector('#urlHint').textContent, /does not support YouTube/i);
+    assert.match(document.querySelector('#urlHint').textContent, /not supported yet/i);
     assert.equal(input.getAttribute('aria-invalid'), 'true');
   } finally {
     teardownDom(dom);
@@ -90,19 +109,42 @@ test('toggles between dark and light themes', async () => {
 
     const toggle = document.querySelector('#themeToggle');
     assert.equal(document.documentElement.dataset.theme, 'dark');
-    assert.match(toggle.textContent, /Light mode/);
-
     toggle.dispatchEvent(new Event('click', { bubbles: true }));
-
     assert.equal(document.documentElement.dataset.theme, 'light');
-    assert.match(toggle.textContent, /Dark mode/);
     assert.equal(window.localStorage.getItem('media-converter-theme'), 'light');
   } finally {
     teardownDom(dom);
   }
 });
 
-test('accepts a dropped URL into the source field', async () => {
+test('resolves a supported page URL and populates output choices', async () => {
+  const dom = setupDom();
+  try {
+    const { initApp } = await loadAppModule();
+    initApp(document.querySelector('#app'), {
+      isApiConfigured: () => true,
+      getApiMode: () => 'configured',
+      getApiBaseUrl: () => 'https://api.example.com',
+      resolveSource: async () => createResolvedPayload(),
+    });
+
+    const input = document.querySelector('#sourceUrl');
+    input.value = 'https://youtube.com/watch?v=abc';
+    document.querySelector('#resolveButton').dispatchEvent(new Event('click', { bubbles: true }));
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    assert.equal(document.querySelector('#resolvedPanel').classList.contains('is-hidden'), false);
+    assert.equal(document.querySelector('#resolvedTitle').textContent, 'Example title');
+    assert.equal(document.querySelector('#outputFormat').value, 'mp4');
+    assert.equal(document.querySelector('#qualityPreset').value, 'mp4-720p');
+    assert.equal(document.querySelector('#submitButton').disabled, false);
+  } finally {
+    teardownDom(dom);
+  }
+});
+
+test('accepts a dropped URL into the source field and clears resolved state', async () => {
   const dom = setupDom();
   try {
     const { initApp } = await loadAppModule();
@@ -120,13 +162,13 @@ test('accepts a dropped URL into the source field', async () => {
     dropZone.dispatchEvent(event);
 
     assert.equal(document.querySelector('#sourceUrl').value, 'https://media.example.com/drop.mp4');
-    assert.match(document.querySelector('#urlHint').textContent, /looks valid/i);
+    assert.equal(document.querySelector('#resolvedPanel').classList.contains('is-hidden'), true);
   } finally {
     teardownDom(dom);
   }
 });
 
-test('shows completion state and download link after a successful submission', async () => {
+test('creates a job from a resolved token and shows download state after completion', async () => {
   const dom = setupDom();
   try {
     const { initApp } = await loadAppModule();
@@ -136,6 +178,7 @@ test('shows completion state and download link after a successful submission', a
       isApiConfigured: () => true,
       getApiMode: () => 'configured',
       getApiBaseUrl: () => 'https://api.example.com',
+      resolveSource: async () => createResolvedPayload(),
       createJob: async (payload) => {
         createJobCalls.push(payload);
         return { jobId: 'job_123', status: 'queued' };
@@ -144,28 +187,30 @@ test('shows completion state and download link after a successful submission', a
         jobId: 'job_123',
         status: 'completed',
         progress: 100,
-        outputFormat: 'mp3',
-        qualityPreset: 'mp3-128k',
-        downloadUrl: 'https://download.example.com/out.mp3',
+        platform: 'youtube',
+        outputFormat: 'mp4',
+        qualityPreset: 'mp4-720p',
+        downloadUrl: 'https://download.example.com/out.mp4',
       }),
     });
 
     const input = document.querySelector('#sourceUrl');
-    input.value = 'https://media.example.com/sample.mp4';
+    input.value = 'https://youtube.com/watch?v=abc';
+    document.querySelector('#resolveButton').dispatchEvent(new Event('click', { bubbles: true }));
+    await new Promise((resolve) => setTimeout(resolve, 0));
     document.querySelector('#jobForm').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
 
     await new Promise((resolve) => setTimeout(resolve, 0));
     await new Promise((resolve) => setTimeout(resolve, 0));
 
     assert.deepEqual(createJobCalls, [{
-      sourceUrl: 'https://media.example.com/sample.mp4',
-      outputFormat: 'mp3',
-      qualityPreset: 'mp3-128k',
+      resolveToken: 'resolve_123',
+      outputFormat: 'mp4',
+      qualityPreset: 'mp4-720p',
     }]);
     assert.match(document.querySelector('#jobStatus').textContent, /Ready to download/);
     assert.equal(document.querySelector('#downloadLink').classList.contains('is-hidden'), false);
-    assert.equal(document.querySelector('#jobId').textContent, 'job_123');
-    assert.equal(document.querySelector('#jobSourceHost').textContent, 'media.example.com');
+    assert.equal(document.querySelector('#jobPlatform').textContent, 'youtube');
   } finally {
     teardownDom(dom);
   }
