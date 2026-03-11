@@ -144,6 +144,32 @@ test('resolves a supported page URL and populates output choices', async () => {
   }
 });
 
+test('surfaces a missing resolve route with a deployment-focused message', async () => {
+  const dom = setupDom();
+  try {
+    const { initApp } = await loadAppModule();
+    initApp(document.querySelector('#app'), {
+      isApiConfigured: () => true,
+      getApiMode: () => 'configured',
+      getApiBaseUrl: () => 'https://api.example.com',
+      resolveSource: async () => {
+        throw Object.assign(new Error('Not found'), { status: 404 });
+      },
+    });
+
+    const input = document.querySelector('#sourceUrl');
+    input.value = 'https://youtube.com/watch?v=abc';
+    document.querySelector('#resolveButton').dispatchEvent(new Event('click', { bubbles: true }));
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    assert.match(document.querySelector('#errorMessage').textContent, /does not have \/api\/resolve yet/i);
+    assert.match(document.querySelector('#statusMessage').textContent, /resolve failed/i);
+  } finally {
+    teardownDom(dom);
+  }
+});
+
 test('accepts a dropped URL into the source field and clears resolved state', async () => {
   const dom = setupDom();
   try {

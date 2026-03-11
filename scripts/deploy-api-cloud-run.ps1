@@ -8,8 +8,8 @@ param(
   [Parameter(Mandatory = $false)]
   [string]$ServiceName = "media-converter-api",
 
-  [Parameter(Mandatory = $true)]
-  [string]$AllowedSourceDomains,
+  [Parameter(Mandatory = $false)]
+  [string]$AllowedSourceDomains = "",
 
   [Parameter(Mandatory = $false)]
   [string]$FrontendOrigin = "https://sbdkim.github.io/media-converter/",
@@ -32,14 +32,25 @@ $sourceDir = Join-Path $repoRoot "backend\api"
 
 Write-Host "Deploying Cloud Run service '$ServiceName' from $sourceDir"
 
+$envVars = @(
+  "PORT=8080"
+  "NODE_ENV=production"
+  "FRONTEND_ORIGIN=$FrontendOrigin"
+  "ALLOWED_SOURCE_DOMAINS=$AllowedSourceDomains"
+  "MAX_SOURCE_SIZE_MB=$MaxSourceSizeMb"
+  "SIGNED_URL_TTL_MINUTES=$SignedUrlTtlMinutes"
+  "USE_IN_MEMORY_STORE=true"
+)
+
 gcloud run deploy $ServiceName `
   --project $ProjectId `
   --region $Region `
   --source $sourceDir `
   --allow-unauthenticated `
-  --set-env-vars "PORT=8080,NODE_ENV=production,FRONTEND_ORIGIN=$FrontendOrigin,ALLOWED_SOURCE_DOMAINS=$AllowedSourceDomains,MAX_SOURCE_SIZE_MB=$MaxSourceSizeMb,SIGNED_URL_TTL_MINUTES=$SignedUrlTtlMinutes,USE_IN_MEMORY_STORE=true"
+  --set-env-vars ($envVars -join ",")
 
 Write-Host "Deployment command completed. Next:"
 Write-Host "1. Copy the service URL from gcloud output."
-Write-Host "2. Set the GitHub repository variable VITE_API_BASE_URL to that URL."
-Write-Host "3. Re-run the Deploy Pages workflow."
+Write-Host "2. Verify the API responds on /health and /api/resolve."
+Write-Host "3. Set the GitHub repository variable VITE_API_BASE_URL to that URL."
+Write-Host "4. Re-run the Deploy Pages workflow."

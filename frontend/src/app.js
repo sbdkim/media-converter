@@ -30,6 +30,33 @@ function formatDuration(durationSeconds) {
   return `${minutes}:${String(seconds).padStart(2, '0')}`;
 }
 
+function formatResolveError(error) {
+  const status = error?.status || 0;
+  const errorCode = error?.errorCode || '';
+
+  if (status === 404) {
+    return 'This backend does not have /api/resolve yet. Redeploy the API before using page URL extraction.';
+  }
+
+  if (errorCode === 'EXTRACTOR_UNAVAILABLE') {
+    return 'The backend is missing yt-dlp. Install yt-dlp and redeploy the API image.';
+  }
+
+  if (errorCode === 'PRIVATE_CONTENT_NOT_SUPPORTED') {
+    return 'That URL requires login or is private. Use a public post or video URL instead.';
+  }
+
+  if (errorCode === 'UNSUPPORTED_PLATFORM') {
+    return 'That platform is not supported yet. Use YouTube, Instagram, or a direct media file URL.';
+  }
+
+  if (errorCode === 'NO_COMPATIBLE_OUTPUT') {
+    return 'No compatible public audio or video stream was found for that URL.';
+  }
+
+  return error instanceof Error ? error.message : 'Unable to resolve that source URL.';
+}
+
 function renderApp() {
   return `
     <div class="app-shell">
@@ -477,7 +504,7 @@ export function initApp(root = document.querySelector('#app'), overrides = {}) {
       setMessage('Source resolved. Choose an output and create the job.');
     } catch (error) {
       clearResolvedState();
-      setError(error instanceof Error ? error.message : 'Unable to resolve that source URL.');
+      setError(formatResolveError(error));
       setMessage('Resolve failed.');
     } finally {
       state.isResolving = false;

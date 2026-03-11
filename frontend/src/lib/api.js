@@ -2,6 +2,16 @@ const configuredApiBaseUrl = import.meta.env?.VITE_API_BASE_URL?.trim();
 const isLocalhost = typeof window !== 'undefined' && ['localhost', '127.0.0.1'].includes(window.location.hostname);
 const API_BASE_URL = configuredApiBaseUrl || (isLocalhost ? 'http://localhost:8080' : '');
 
+class ApiRequestError extends Error {
+  constructor(message, { status = 0, errorCode = '', payload = null } = {}) {
+    super(message);
+    this.name = 'ApiRequestError';
+    this.status = status;
+    this.errorCode = errorCode;
+    this.payload = payload;
+  }
+}
+
 export function getApiMode() {
   if (configuredApiBaseUrl) {
     return 'configured';
@@ -24,7 +34,9 @@ export function isApiConfigured() {
 
 async function request(path, options = {}) {
   if (!API_BASE_URL) {
-    throw new Error('Backend API is not configured for this deployment yet.');
+    throw new ApiRequestError('Backend API is not configured for this deployment yet.', {
+      errorCode: 'API_NOT_CONFIGURED',
+    });
   }
 
   const response = await fetch(`${API_BASE_URL}${path}`, {
@@ -44,7 +56,11 @@ async function request(path, options = {}) {
 
   if (!response.ok) {
     const message = payload?.errorMessage || payload?.message || 'Request failed.';
-    throw new Error(message);
+    throw new ApiRequestError(message, {
+      status: response.status,
+      errorCode: payload?.errorCode || '',
+      payload,
+    });
   }
 
   return payload;
