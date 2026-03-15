@@ -1,56 +1,30 @@
 :root {
-  font-family: "Aptos", "Bahnschrift", sans-serif;
+  font-family: var(--font-body);
   line-height: 1.5;
   font-weight: 400;
-  color: #f2ede6;
-  background: #111112;
-  --page: #111112;
-  --page-top: #191819;
-  --surface: #171718;
-  --surface-alt: #1e1d1f;
-  --surface-soft: #232225;
-  --border: #343136;
-  --border-strong: #4d484f;
-  --text: #f2ede6;
-  --heading-text: #f7f2eb;
-  --field-text: #f2ede6;
-  --field-bg: #111112;
-  --field-placeholder: #7f776f;
-  --progress-track-bg: #29272b;
-  --row-divider: rgba(255, 255, 255, 0.06);
-  --button-text-on-light: #151516;
-  --muted: #a49b92;
-  --accent: #d29a64;
-  --accent-deep: #8b5a2b;
-  --success: #8bc29a;
-  --danger: #e08b7f;
-  --shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
-}
-
-:root[data-theme='light'] {
-  color: #1e1f23;
-  background: #efebe4;
-  --page: #efebe4;
+  color: var(--color-text-primary);
+  background: var(--color-surface-base);
+  --page: var(--color-surface-base);
   --page-top: #f4efe8;
-  --surface: #faf7f2;
-  --surface-alt: #f2ede6;
-  --surface-soft: #ebe4db;
-  --border: #d6ccc0;
-  --border-strong: #b4a797;
-  --text: #1e1f23;
-  --heading-text: #1f1813;
-  --field-text: #1f1c19;
-  --field-bg: #fffdfa;
-  --field-placeholder: #877b70;
-  --progress-track-bg: #dfd5ca;
+  --surface: color-mix(in srgb, var(--color-surface-raised) 94%, transparent);
+  --surface-alt: color-mix(in srgb, var(--color-surface-sunken) 56%, white);
+  --surface-soft: color-mix(in srgb, var(--color-surface-sunken) 78%, white);
+  --border: var(--color-border-default);
+  --border-strong: var(--color-border-strong);
+  --text: var(--color-text-primary);
+  --heading-text: var(--color-text-primary);
+  --field-text: var(--color-text-primary);
+  --field-bg: var(--color-surface-raised);
+  --field-placeholder: var(--color-text-muted);
+  --progress-track-bg: color-mix(in srgb, var(--color-surface-sunken) 78%, white);
   --row-divider: rgba(94, 74, 54, 0.14);
-  --button-text-on-light: #201914;
-  --muted: #675f56;
-  --accent: #9b5b2f;
-  --accent-deep: #7f471f;
-  --success: #487056;
-  --danger: #9d4b41;
-  --shadow: 0 8px 24px rgba(54, 41, 28, 0.08);
+  --button-text-on-light: var(--color-text-inverse);
+  --muted: var(--color-text-secondary);
+  --accent: var(--color-brand-primary);
+  --accent-deep: var(--color-brand-secondary);
+  --success: var(--color-status-success);
+  --danger: var(--color-status-error);
+  --shadow: var(--shadow-lg);
 }
 
 * {
@@ -65,13 +39,9 @@ body {
   margin: 0;
   min-height: 100vh;
   background:
-    linear-gradient(180deg, #1b1a1c 0, #131314 220px, #111112 100%);
-  color: var(--text);
-}
-
-:root[data-theme='light'] body {
-  background:
+    radial-gradient(circle at top left, rgba(37, 99, 235, 0.12), transparent 30%),
     linear-gradient(180deg, #faf6f0 0, #f0ebe3 220px, #efebe4 100%);
+  color: var(--text);
 }
 
 button,
@@ -85,7 +55,7 @@ a {
 }
 
 code {
-  font-family: "Cascadia Code", monospace;
+  font-family: var(--font-mono);
   font-size: 0.92em;
 }
 
@@ -118,7 +88,7 @@ code {
 
 .product-kicker,
 .section-label {
-  color: var(--accent);
+  color: var(--color-brand-secondary);
   font-size: 0.77rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -131,6 +101,7 @@ code {
   margin: 0;
   line-height: 1.06;
   color: var(--heading-text);
+  font-family: var(--font-display);
 }
 
 .brand-block h1 {
@@ -171,8 +142,7 @@ code {
 }
 
 .env-badge,
-.state-chip,
-.theme-toggle {
+.state-chip {
   display: inline-flex;
   align-items: center;
   min-height: 34px;
@@ -184,33 +154,28 @@ code {
   font-weight: 700;
 }
 
-.theme-toggle {
-  cursor: pointer;
-  color: var(--text);
-}
-
 .env-badge[data-state='ready'],
 .state-chip[data-state='completed'] {
-  border-color: rgba(139, 194, 154, 0.45);
-  color: #d9f0df;
-  background: rgba(78, 107, 85, 0.28);
+  border-color: color-mix(in srgb, var(--color-status-success) 30%, white);
+  color: var(--color-status-success);
+  background: color-mix(in srgb, var(--color-status-success) 10%, white);
 }
 
 .env-badge[data-state='local'],
 .state-chip[data-state='processing'],
 .state-chip[data-state='queued'],
 .state-chip[data-state='validating'] {
-  border-color: rgba(210, 154, 100, 0.45);
-  color: #f0d8bf;
-  background: rgba(139, 90, 43, 0.22);
+  border-color: color-mix(in srgb, var(--color-status-warning) 30%, white);
+  color: var(--color-status-warning);
+  background: color-mix(in srgb, var(--color-status-warning) 10%, white);
 }
 
 .env-badge[data-state='offline'],
 .state-chip[data-state='failed'],
 .state-chip[data-state='expired'] {
-  border-color: rgba(224, 139, 127, 0.42);
-  color: #ffd5cf;
-  background: rgba(120, 57, 49, 0.22);
+  border-color: color-mix(in srgb, var(--color-status-error) 30%, white);
+  color: var(--color-status-error);
+  background: color-mix(in srgb, var(--color-status-error) 10%, white);
 }
 
 .workspace {

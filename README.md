@@ -1,6 +1,6 @@
-# Media Converter
+# Convert Media
 
-Split-stack media conversion project with a GitHub Pages frontend and backend services for converting authorized direct media URLs into fixed presets.
+Split-stack media conversion project with a GitHub Pages frontend and backend services for converting authorized direct media URLs into fixed presets with the Northline visual system.
 
 ## Live Demo
 [https://sbdkim.github.io/media-converter/](https://sbdkim.github.io/media-converter/)
@@ -49,3 +49,4 @@ npm.cmd run test
 ## Privacy / Notes
 - The current repo is a prototype with real UI and API contracts, but some cloud integrations are still stubbed.
 - See [docs/deployment.md](./docs/deployment.md) for Cloud Run deployment details and current production limitations.
+- The public product name is `Convert Media`, while the repo slug remains `media-converter` until the rename pass.

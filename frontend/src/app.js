@@ -18,8 +18,6 @@ const STATUS_DETAILS = {
   idle: 'Paste a public YouTube, Instagram, or direct media URL to begin.',
 };
 
-const THEME_STORAGE_KEY = 'media-converter-theme';
-
 function formatDuration(durationSeconds) {
   if (!durationSeconds) {
     return 'Unknown';
@@ -62,14 +60,13 @@ function renderApp() {
     <div class="app-shell">
       <header class="topbar">
         <div class="brand-block">
-          <p class="product-kicker">Media Converter</p>
-          <h1>Resolve public page URLs into downloadable media.</h1>
-          <p class="brand-copy">Supports YouTube, Instagram, and direct file links with a resolve-first workflow.</p>
+          <p class="product-kicker">Northline Media</p>
+          <h1>Convert public media without a cluttered workflow.</h1>
+          <p class="brand-copy">Resolve supported public URLs, confirm available outputs, and send the job to the backend only when the source is ready.</p>
         </div>
         <div class="env-panel">
           <div class="env-actions">
             <span id="backendBadge" class="env-badge">Checking runtime</span>
-            <button id="themeToggle" class="theme-toggle" type="button">Light mode</button>
           </div>
           <p id="deployMessage" class="env-copy" aria-live="polite"></p>
         </div>
@@ -239,7 +236,6 @@ export function initApp(root = document.querySelector('#app'), overrides = {}) {
   const pasteButton = root.querySelector('#pasteButton');
   const dropZone = root.querySelector('#dropZone');
   const backendBadge = root.querySelector('#backendBadge');
-  const themeToggle = root.querySelector('#themeToggle');
   const deployMessage = root.querySelector('#deployMessage');
   const urlHint = root.querySelector('#urlHint');
   const presetHint = root.querySelector('#presetHint');
@@ -265,17 +261,6 @@ export function initApp(root = document.querySelector('#app'), overrides = {}) {
   const progressFill = root.querySelector('#progressFill');
   const jobStatePill = root.querySelector('#jobStatePill');
   const stage = root.querySelector('.stage');
-
-  function getPreferredTheme() {
-    const storedTheme = window.localStorage?.getItem(THEME_STORAGE_KEY);
-    return storedTheme === 'light' ? 'light' : 'dark';
-  }
-
-  function applyTheme(theme) {
-    document.documentElement.dataset.theme = theme;
-    themeToggle.textContent = theme === 'dark' ? 'Light mode' : 'Dark mode';
-    window.localStorage?.setItem(THEME_STORAGE_KEY, theme);
-  }
 
   function clearResolvedState() {
     state.resolved = null;
@@ -607,10 +592,6 @@ export function initApp(root = document.querySelector('#app'), overrides = {}) {
     }
   });
 
-  themeToggle.addEventListener('click', () => {
-    applyTheme(document.documentElement.dataset.theme === 'light' ? 'dark' : 'light');
-  });
-
   outputFormatSelect.addEventListener('change', () => {
     state.outputFormat = outputFormatSelect.value;
     refreshPresetChoices();
@@ -631,7 +612,7 @@ export function initApp(root = document.querySelector('#app'), overrides = {}) {
     sourceUrlInput.focus();
   });
 
-  applyTheme(getPreferredTheme());
+  document.documentElement.dataset.theme = 'light';
   clearResolvedState();
   setUrlHint('Public YouTube, Instagram, or direct media URL.', 'neutral');
   syncDeploymentState();

@@ -101,17 +101,14 @@ test('shows inline URL validation feedback before resolve', async () => {
   }
 });
 
-test('toggles between dark and light themes', async () => {
+test('uses the Northline light theme by default', async () => {
   const dom = setupDom();
   try {
     const { initApp } = await loadAppModule();
     initApp(document.querySelector('#app'));
 
-    const toggle = document.querySelector('#themeToggle');
-    assert.equal(document.documentElement.dataset.theme, 'dark');
-    toggle.dispatchEvent(new Event('click', { bubbles: true }));
     assert.equal(document.documentElement.dataset.theme, 'light');
-    assert.equal(window.localStorage.getItem('media-converter-theme'), 'light');
+    assert.equal(document.querySelector('#themeToggle'), null);
   } finally {
     teardownDom(dom);
   }
