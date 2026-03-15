@@ -6,13 +6,13 @@ param(
   [string]$Region = "asia-northeast3",
 
   [Parameter(Mandatory = $false)]
-  [string]$ServiceName = "media-converter-api",
+  [string]$ServiceName = "convert-media-api",
 
   [Parameter(Mandatory = $false)]
   [string]$AllowedSourceDomains = "",
 
   [Parameter(Mandatory = $false)]
-  [string]$FrontendOrigin = "https://sbdkim.github.io/media-converter/",
+  [string]$FrontendOrigin = "https://sbdkim.github.io/convert-media/",
 
   [Parameter(Mandatory = $false)]
   [string]$MaxSourceSizeMb = "250",

@@ -13,8 +13,8 @@
 This is enough for a practical first deployment, but it is still not a durable production architecture.
 
 ## What must be true for resolve to work
-- The deployed API must include the new route in [`backend/api/src/app.js`](C:/Users/KRSBK/OneDrive%20-%20Wallenius%20Wilhelmsen/Documents/SBKIM/PERSONALDOCS/OTHER/2026.03.09_media_converter/media-converter/backend/api/src/app.js)
-- The API image built from [`backend/api/Dockerfile`](C:/Users/KRSBK/OneDrive%20-%20Wallenius%20Wilhelmsen/Documents/SBKIM/PERSONALDOCS/OTHER/2026.03.09_media_converter/media-converter/backend/api/Dockerfile) must install:
+- The deployed API must include the new route in `backend/api/src/app.js`.
+- The API image built from `backend/api/Dockerfile` must install:
   - `yt-dlp` for metadata extraction and page-media download
   - `ffmpeg` for conversion in the inline job runner
 - GitHub Pages must be rebuilt with `VITE_API_BASE_URL` set to the deployed API origin
@@ -57,7 +57,7 @@ What Phase 1 does not include:
    ```
 3. Deploy the API from the repo root:
    ```powershell
-   .\scripts\deploy-api-cloud-run.ps1 -ProjectId <your-project-id> -FrontendOrigin "https://sbdkim.github.io/media-converter/"
+   .\scripts\deploy-api-cloud-run.ps1 -ProjectId <your-project-id> -FrontendOrigin "https://sbdkim.github.io/convert-media/"
    ```
 4. Copy the resulting Cloud Run service URL.
 

@@ -1,5 +1,5 @@
 {
-  "name": "authorized-media-converter-api",
+  "name": "convert-media-api",
   "private": true,
   "version": "0.1.0",
   "type": "module",

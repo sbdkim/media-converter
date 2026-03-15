@@ -1,5 +1,5 @@
 {
-  "name": "authorized-media-converter-worker",
+  "name": "convert-media-worker",
   "private": true,
   "version": "0.1.0",
   "type": "module",
